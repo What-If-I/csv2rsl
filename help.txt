@@ -1,0 +1,27 @@
+/* This program is free software. It comes without any warranty, to
+     * the extent permitted by applicable law. You can redistribute it
+     * and/or modify it under the terms of the Do What The Fuck You Want
+     * To Public License, Version 2, as published by Sam Hocevar. See
+     * http://www.wtfpl.net/ for more details. */
+
+Исходники на Python 3.3+ 
+Код совместим с Python 2.7, но не тестировался и работа не гарантируется.
+
+=====================================================================================================
+
+Для работы обоих скриптов необходимо указать путь к соответвующему файлу. Конвертированный файл будет
+сохранён в ту же папку с идентичным именем и новым расширением. Исходный файл остаётся без изменений.
+
+Пример работы:
+csv2rsl.exe C:\Users\myusername\Desktop\mycsv.csv
+
+>> Saved as C:\Users\myusername\Desktop\mycsv.rsl
+
+
+rsl2csv.exe C:\Users\myusername\Desktop\myrsl.rsl
+
+>> Saved as C:\Users\myusername\Desktop\myrsl.csv
+
+=====================================================================================================
+
+Разделитель в CSV определяется автоматически. При экспорте в CSV, разделителем служит запятая.
