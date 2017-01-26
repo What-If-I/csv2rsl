@@ -40,14 +40,14 @@ def get_path_from_console_args():
 
 def main(path2csv):
 
-    with open(path2csv, mode='r') as csvfile:
+    with open(path2csv, mode='r', encoding='utf-8') as csvfile:
         try:
-            dialect = csv.Sniffer().sniff(csvfile.read(2048))
+            dialect = csv.Sniffer().sniff(csvfile.read(2048), delimiters=[',', ';', '\t', ' ', ':'])
         except csv.Error:
             print("Не смог распознать разделитель по первым 2048 битам.\n"
                   "Пробую прочесть весь файл...")
             csvfile.seek(0)
-            dialect = csv.Sniffer().sniff(csvfile.read())
+            dialect = csv.Sniffer().sniff(csvfile.read(), )
         csvfile.seek(0)
         has_header = csv.Sniffer().has_header(csvfile.read(2048))
         csvfile.seek(0)
