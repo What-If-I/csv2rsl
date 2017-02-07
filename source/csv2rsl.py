@@ -1,6 +1,13 @@
 import csv
 import sys
+import argparse
+
 from os import path
+
+
+def prompt_enter_and_exit():
+    input("Работа завершилась неудачно. Нажмите Enter для выхода.")
+    exit(1)
 
 
 def concatenate_values(header, values, separator='=', delimiter="|"):
@@ -38,41 +45,62 @@ def get_path_from_console_args():
         return argv[1]
 
 
-def main(path2csv):
+def parse_args():
+    parser = argparse.ArgumentParser(description="Утилита конвертирует csv файл в rsl.")
+    parser.add_argument(dest="input_file", help="Путь к файлу csv.")
+    parser.add_argument('-d', dest="delimiter", help="Разделитель.")
+    parser.add_argument('-o', dest="output_file", help="Файл на выходе.")
+    p = parser.parse_args()
+    return p.input_file, p.delimiter, p.output_file
 
-    with open(path2csv, mode='r', encoding='utf-8') as csvfile:
+
+def main(path2csv, csv_delimiter=None, path2rsl=None):
+    with open(path2csv, mode='r', encoding='utf-8') as csv_file:
+        csv_delimiters = [csv_delimiter] if csv_delimiter else [',', ';', '\t', ' ', ':']
+
         try:
-            dialect = csv.Sniffer().sniff(csvfile.read(2048), delimiters=[',', ';', '\t', ' ', ':'])
-        except csv.Error:
-            print("Не смог распознать разделитель по первым 2048 битам.\n"
-                  "Пробую прочесть весь файл...")
-            csvfile.seek(0)
-            dialect = csv.Sniffer().sniff(csvfile.read(), )
-        csvfile.seek(0)
-        has_header = csv.Sniffer().has_header(csvfile.read(2048))
-        csvfile.seek(0)
+            dialect = csv.Sniffer().sniff(csv_file.read(2048), delimiters=csv_delimiters)
 
-        if not has_header:
-            input("[WARNING] Файл не содержит заголовка. Для выхода нажмите Enter")
-            exit()
+        except UnicodeDecodeError as err:
+            print("[WARNING] Убедись что файл в кодировке UTF-8(без BOM)")
+            print("Error:", err)
+            prompt_enter_and_exit()
 
-        csv_reader = csv.reader(csvfile, dialect=dialect)
-        headers = next(csv_reader)
-        rows = [row for row in csv_reader]
+        except csv.Error as err:
+            if csv_delimiter:
+                print("[WARNING] Не удалось прочесть файл с указанным разделителем.")
+            else:
+                print("[WARNING] Не удалось подобрать разделитель.")
+            print("Пожалуйста укажите верный разделитель с параметром -d")
+            print("Error:", err)
+            prompt_enter_and_exit()
 
-        concatenated_values = []
-        for row in rows:
-            concatenated_values.append(concatenate_values(headers, row) + "\n")
+        else:
+            csv_file.seek(0)
+            has_header = csv.Sniffer().has_header(csv_file.read(2048))
+            csv_file.seek(0)
 
-    path2rsl = path2csv.split(".")[0] + ".rsl"
-    with open(path2rsl, mode='w', encoding='utf-8') as rslfile:
-        rslfile.writelines(concatenated_values)
+            if not has_header:
+                input("[WARNING] Заголовок в файле не найден.")
+                prompt_enter_and_exit()
 
-    print("Файл успешно сохранён:", path2rsl)
+            csv_reader = csv.reader(csv_file, dialect=dialect)
+            headers = next(csv_reader)
+            rows = (row for row in csv_reader)
+
+            concatenated_values = [(concatenate_values(headers, row) + "\n")
+                                   for row in rows]
+
+            path2rsl = path2rsl if path2rsl else path2csv.split(".")[0] + ".rsl"
+            with open(path2rsl, mode='w', encoding='utf-8') as rslfile:
+                rslfile.writelines(concatenated_values)
+
+            print("Файл успешно сохранён:", path2rsl)
+
 
 if __name__ == '__main__':
-    path2file = get_path_from_console_args()
-    if path2file and valid_csv(path2file):
-        main(path2file)
+    input_path, delimiter, output_path = parse_args()
+    if valid_csv(input_path):
+        main(input_path, delimiter, output_path)
     else:
-        sys.exit(0)
+        prompt_enter_and_exit()
